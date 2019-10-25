@@ -1,0 +1,29 @@
+{
+  "name": "teachlangs-lint",
+  "version": "1.0.0",
+  "description": "Static code analysis tool for Racket's teaching languages",
+  "main": "./dist/index.js",
+  "bin": "./dist/cli.js",
+  "scripts": {
+    "test": "mocha dist/test"
+  },
+  "author": "Dylan Burati",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "mocha": "^6.2.1",
+    "yargs": "^14.2.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.144",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.11.1",
+    "@types/yargs": "^13.0.3",
+    "@typescript-eslint/eslint-plugin": "^2.4.0",
+    "@typescript-eslint/parser": "^2.4.0",
+    "eslint": "^6.5.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "typescript": "^3.6.4"
+  }
+}
