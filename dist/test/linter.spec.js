@@ -160,6 +160,13 @@ describe('Internal function', () => {
             };
             assert.strictEqual(tryParseSignature(nonSignature), false);
         });
+        it('Should return false when the comment does not have an arrow', () => {
+            const nonSignature = {
+                kind: 'LineComment',
+                source: '; complete? : [X X -> X] [List-of Task]'
+            };
+            assert.strictEqual(tryParseSignature(nonSignature), false);
+        });
         it('Should return false when the comment has mismatched parentheses', () => {
             const nonSignature = {
                 kind: 'LineComment',

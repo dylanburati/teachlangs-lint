@@ -52,9 +52,9 @@ function tryParseSignature(node: RacketNode): FunctionDesign | false {
           parsedSig.children[0].kind === 'Variable' &&
           isMatch(parsedSig.children[1], colon)) {
         
-        const arrowIndices = parsedSig.children.map(matches(arrow));
-        const arrowIdx = arrowIndices.indexOf(true);
-        if(arrowIdx !== arrowIndices.lastIndexOf(true)) {
+        const arrowIndices = parsedSig.children.map((e, i) => isMatch(e, arrow) ? i : -1)
+            .filter(n => (n >= 0));
+        if(arrowIndices.length !== 1) {
           return false;
         }
 
