@@ -463,6 +463,50 @@ describe('Linter class', () => {
             const slopeActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'slope'));
             assert.deepStrictEqual(slopeActual, slopeExpected);
         });
+        describe('Example 3 (multi-semicolon comments)', () => {
+            const example = `
+      ;; inlinks-count : String Wiki -> Nat
+      ;; Count the number of inlinks in a given page
+      (check-expect (inlinks-count "any" WIKI-EMPTY) 0)
+      (check-expect (inlinks-count "NEU" WIKI-FULL) 3)
+      (define (inlinks-count pagename wiki)
+        (foldr (λ (wp sofar) (if (links-to-page? wp pagename) (add1 sofar) sofar)) 0 wiki))
+
+      ;;; links-to-page? : WebPage String -> Boolean
+      ;;; Does the given page link to a page with the given name?
+      (check-expect (links-to-page? PAGE-KHOURY "Computers") false)
+      (check-expect (links-to-page? PAGE-NEU "Boston") true)
+      (define (links-to-page? wp pagename)
+        (ormap (λ (neighbor) (string=? neighbor pagename)) (page-links wp)))`;
+            const parser = new Parser(example);
+            while (parser.status === ParserStatus.InProgress) {
+                parser.advance();
+            }
+            const linter = Linter.fromParser(parser);
+            linter.lint();
+            it('Should generate no warnings for "inlinks-count"', () => {
+                const fnDesignExpected = {
+                    kind: 'FunctionDesign',
+                    name: 'inlinks-count',
+                    purposeLines: 1,
+                    tests: 2,
+                    warnings: []
+                };
+                const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'inlinks-count'));
+                assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
+            });
+            it('Should generate no warnings for "links-to-page?"', () => {
+                const fnDesignExpected = {
+                    kind: 'FunctionDesign',
+                    name: 'links-to-page?',
+                    purposeLines: 1,
+                    tests: 2,
+                    warnings: []
+                };
+                const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'links-to-page?'));
+                assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
+            });
+        });
     });
 });
 //# sourceMappingURL=linter.spec.js.map

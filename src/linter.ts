@@ -36,7 +36,7 @@ function emptyFunctionDesign(): FunctionDesign {
 
 function tryParseSignature(node: RacketNode): FunctionDesign | false {
   if(node.kind === 'LineComment' && node.source.includes(':') && node.source.includes('->')) {
-    const commentAsSig = `(${node.source.replace(';', '').replace(':', ' : ')})`;
+    const commentAsSig = `(${node.source.replace(/^[; ]+/, '').replace(':', ' : ')})`;
     const parser = new Parser(commentAsSig);
     while(parser.status === ParserStatus.InProgress) {
       parser.advance();
