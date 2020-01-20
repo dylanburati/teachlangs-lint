@@ -1,22 +1,28 @@
 import * as assert from 'assert';
+import { isMatch, pick } from 'lodash';
 import { describe, it } from 'mocha';
-import { pick, isMatch } from 'lodash';
 import {
-  Atom, Expr, RacketNode, ParserStatus, Parser,
-} from '../parser';
-import {
-  emptyFunctionDesign, tryParseSignature, racketNodeIsConstant,
-  racketNodeHasTemplateVars, tryGetFunctionDef, Linter, FunctionDef,
-  tryGetTestDef, TestDef, FunctionDesign, GeneralWarningList
+  emptyFunctionDesign,
+  FunctionDef,
+  FunctionDesign,
+  GeneralWarningList,
+  Linter,
+  racketNodeHasTemplateVars,
+  racketNodeIsConstant,
+  TestDef,
+  tryGetFunctionDef,
+  tryGetTestDef,
+  tryParseSignature,
 } from '../linter';
+import { Atom, Expr, Parser, ParserStatus, RacketNode } from '../parser';
 
 const CONSTANT_GREETING: Expr = {
   kind: 'Expression',
   children: [
     { kind: 'Variable', source: 'define' },
     { kind: 'Variable', source: 'GREETING-1' },
-    { kind: 'String', source: '"Hello"' }
-  ]
+    { kind: 'String', source: '"Hello"' },
+  ],
 };
 const FUNCTION_DO_TO_ALL: Expr = {
   kind: 'Expression',
@@ -27,18 +33,18 @@ const FUNCTION_DO_TO_ALL: Expr = {
       children: [
         { kind: 'Variable', source: 'do-to-all' },
         { kind: 'Variable', source: 'f' },
-        { kind: 'Variable', source: '..lox..' }
-      ]
+        { kind: 'Variable', source: '..lox..' },
+      ],
     },
     {
       kind: 'Expression',
       children: [
         { kind: 'Variable', source: 'map' },
         { kind: 'Variable', source: 'f' },
-        { kind: 'Variable', source: '..lox..' }
-      ]
-    }
-  ]
+        { kind: 'Variable', source: '..lox..' },
+      ],
+    },
+  ],
 };
 const FUNCTION_MY_ANIMATE: Expr = {
   kind: 'Expression',
@@ -48,8 +54,8 @@ const FUNCTION_MY_ANIMATE: Expr = {
       kind: 'Expression',
       children: [
         { kind: 'Variable', source: 'my-animate' },
-        { kind: 'Variable', source: 'f-to-draw' }
-      ]
+        { kind: 'Variable', source: 'f-to-draw' },
+      ],
     },
     {
       kind: 'Expression',
@@ -59,19 +65,19 @@ const FUNCTION_MY_ANIMATE: Expr = {
           kind: 'Expression',
           children: [
             { kind: 'Variable', source: 'to-draw' },
-            { kind: 'Variable', source: 'f-to-draw' }
-          ]
+            { kind: 'Variable', source: 'f-to-draw' },
+          ],
         },
         {
           kind: 'Expression',
           children: [
             { kind: 'Variable', source: 'on-tick' },
-            { kind: 'Variable', source: 'add1' }
-          ]
-        }
-      ]
-    }
-  ]
+            { kind: 'Variable', source: 'add1' },
+          ],
+        },
+      ],
+    },
+  ],
 };
 const TEMPLATE_POINT_TEMP: Expr = {
   kind: 'Expression',
@@ -81,8 +87,8 @@ const TEMPLATE_POINT_TEMP: Expr = {
       kind: 'Expression',
       children: [
         { kind: 'Variable', source: 'point-temp' },
-        { kind: 'Variable', source: 'p' }
-      ]
+        { kind: 'Variable', source: 'p' },
+      ],
     },
     {
       kind: 'Expression',
@@ -91,20 +97,20 @@ const TEMPLATE_POINT_TEMP: Expr = {
           kind: 'Expression',
           children: [
             { kind: 'Variable', source: 'posn-x' },
-            { kind: 'Variable', source: 'p' }
-          ]
+            { kind: 'Variable', source: 'p' },
+          ],
         },
         { kind: 'Variable', source: '...' },
         {
           kind: 'Expression',
           children: [
             { kind: 'Variable', source: 'posn-y' },
-            { kind: 'Variable', source: 'p' }
-          ]
-        }
-      ]
-    }
-  ]
+            { kind: 'Variable', source: 'p' },
+          ],
+        },
+      ],
+    },
+  ],
 };
 const TEST_CHECK_EXPECT: Expr = {
   kind: 'Expression',
@@ -116,11 +122,11 @@ const TEST_CHECK_EXPECT: Expr = {
         { kind: 'Variable', source: 'nonsense' },
         { kind: 'String', source: '"xyz"' },
         { kind: 'Number', source: '3' },
-        { kind: 'String', source: '"ab"' }
-      ]
+        { kind: 'String', source: '"ab"' },
+      ],
     },
-    { kind: 'String', source: '"xyxyxy + ab"' }
-  ]
+    { kind: 'String', source: '"xyxyxy + ab"' },
+  ],
 };
 const TEST_CHECK_WITHIN: Expr = {
   kind: 'Expression',
@@ -136,21 +142,21 @@ const TEST_CHECK_WITHIN: Expr = {
           children: [
             { kind: 'Variable', source: 'list' },
             { kind: 'Number', source: '4' },
-            { kind: 'Number', source: '9' }
-          ]
-        }
-      ]
+            { kind: 'Number', source: '9' },
+          ],
+        },
+      ],
     },
     {
       kind: 'Expression',
       children: [
         { kind: 'Variable', source: 'list' },
         { kind: 'Number', source: '2' },
-        { kind: 'Number', source: '3' }
-      ]
+        { kind: 'Number', source: '3' },
+      ],
     },
-    { kind: 'Number', source: '0.000001' }
-  ]
+    { kind: 'Number', source: '0.000001' },
+  ],
 };
 
 describe('Internal function', () => {
@@ -158,7 +164,7 @@ describe('Internal function', () => {
     it('Should return false when given something other than a line comment', () => {
       const nonSignature: Atom = {
         kind: 'String',
-        source: '""'
+        source: '""',
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
     });
@@ -166,7 +172,7 @@ describe('Internal function', () => {
     it('Should return false when the comment does not have a colon and arrow', () => {
       const nonSignature: Atom = {
         kind: 'LineComment',
-        source: ';    \t'
+        source: ';    \t',
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
     });
@@ -174,7 +180,7 @@ describe('Internal function', () => {
     it('Should return false when the comment does not have an arrow', () => {
       const nonSignature: Atom = {
         kind: 'LineComment',
-        source: '; complete? : [X X -> X] [List-of Task]'
+        source: '; complete? : [X X -> X] [List-of Task]',
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
     });
@@ -182,7 +188,7 @@ describe('Internal function', () => {
     it('Should return false when the comment has mismatched parentheses', () => {
       const nonSignature: Atom = {
         kind: 'LineComment',
-        source: '; read-syntax : (()(() -> '
+        source: '; read-syntax : (()(() -> ',
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
     });
@@ -190,7 +196,7 @@ describe('Internal function', () => {
     it('Should return false when the comment has multiple words before the colon', () => {
       const nonSignature: Atom = {
         kind: 'LineComment',
-        source: "; Ceci n'est pas un signature : A -> B"
+        source: "; Ceci n'est pas un signature : A -> B",
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
     });
@@ -198,13 +204,13 @@ describe('Internal function', () => {
     it('Should return false when there is not exactly 1 arrow outside parentheses `->`', () => {
       const nonSignature: Atom = {
         kind: 'LineComment',
-        source: '; Returns: (nothing->something Null)'
+        source: '; Returns: (nothing->something Null)',
       };
       assert.strictEqual(tryParseSignature(nonSignature), false);
 
       const nonSignature2: Atom = {
         kind: 'LineComment',
-        source: '; chain: 1 -> 2 -> 3'
+        source: '; chain: 1 -> 2 -> 3',
       };
       assert.strictEqual(tryParseSignature(nonSignature2), false);
     });
@@ -212,17 +218,17 @@ describe('Internal function', () => {
     it('Should return a new FunctionDesign for the "nonsense" example', () => {
       const signature: Atom = {
         kind: 'LineComment',
-        source: '; nonsense : String Number String -> String\n'
+        source: '; nonsense : String Number String -> String\n',
       };
       const fnDesign = emptyFunctionDesign();
-      fnDesign.name = 'nonsense'
+      fnDesign.name = 'nonsense';
       assert.deepStrictEqual(tryParseSignature(signature), fnDesign);
     });
 
     it('Should return a new FunctionDesign for the "draw-dot" example', () => {
       const signature: Atom = {
         kind: 'LineComment',
-        source: ';draw-dot:(make-posn Real Real)-> Image\n'
+        source: ';draw-dot:(make-posn Real Real)-> Image\n',
       };
       const fnDesign = emptyFunctionDesign();
       fnDesign.name = 'draw-dot';
@@ -246,12 +252,18 @@ describe('Internal function', () => {
     it('Should return false for anything that does not contain template vars', () => {
       assert.strictEqual(racketNodeHasTemplateVars(FUNCTION_DO_TO_ALL), false);
       assert.strictEqual(racketNodeHasTemplateVars(TEST_CHECK_EXPECT), false);
-      assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[1]), false);
+      assert.strictEqual(
+        racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[1]),
+        false
+      );
     });
 
     it('Should return true for template functions / function bodies', () => {
       assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP), true);
-      assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[2]), true);
+      assert.strictEqual(
+        racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[2]),
+        true
+      );
     });
   });
 
@@ -264,14 +276,14 @@ describe('Internal function', () => {
 
     it('Should return a new TestDef for the "check-expect" example', () => {
       const testDef: TestDef = {
-        actual: TEST_CHECK_EXPECT.children[1]  // (nonsense "xyz" 3 "ab")
+        actual: TEST_CHECK_EXPECT.children[1], // (nonsense "xyz" 3 "ab")
       };
       assert.deepStrictEqual(tryGetTestDef(TEST_CHECK_EXPECT), testDef);
     });
 
     it('Should return a new TestDef for the "check-within" example', () => {
       const testDef: TestDef = {
-        actual: TEST_CHECK_WITHIN.children[1]  // (do-to-all sqrt (list 4 9))
+        actual: TEST_CHECK_WITHIN.children[1], // (do-to-all sqrt (list 4 9))
       };
       assert.deepStrictEqual(tryGetTestDef(TEST_CHECK_WITHIN), testDef);
     });
@@ -281,7 +293,10 @@ describe('Internal function', () => {
     it('Should return false for anything that is not a function', () => {
       assert.strictEqual(tryGetFunctionDef(TEST_CHECK_EXPECT), false);
       assert.strictEqual(tryGetFunctionDef(TEST_CHECK_WITHIN), false);
-      assert.strictEqual(tryGetFunctionDef(FUNCTION_MY_ANIMATE.children[2]), false);
+      assert.strictEqual(
+        tryGetFunctionDef(FUNCTION_MY_ANIMATE.children[2]),
+        false
+      );
     });
 
     it('Should return a new FunctionDef when given a template function', () => {
@@ -290,9 +305,12 @@ describe('Internal function', () => {
         argNames: ['p'],
         isTemplate: true,
         // ((posn-x p) ... (posn-y p))
-        body: TEMPLATE_POINT_TEMP.children[2]
+        body: TEMPLATE_POINT_TEMP.children[2],
       };
-      assert.deepStrictEqual(tryGetFunctionDef(TEMPLATE_POINT_TEMP), pointTempDef);
+      assert.deepStrictEqual(
+        tryGetFunctionDef(TEMPLATE_POINT_TEMP),
+        pointTempDef
+      );
     });
 
     it('Should return a new FunctionDef for the "do-to-all" example', () => {
@@ -301,7 +319,7 @@ describe('Internal function', () => {
         argNames: ['f', '..lox..'],
         isTemplate: false,
         // (map f ..lox..)
-        body: FUNCTION_DO_TO_ALL.children[2]
+        body: FUNCTION_DO_TO_ALL.children[2],
       };
       assert.deepStrictEqual(tryGetFunctionDef(FUNCTION_DO_TO_ALL), doToAllDef);
     });
@@ -312,9 +330,12 @@ describe('Internal function', () => {
         argNames: ['f-to-draw'],
         isTemplate: false,
         // (big-bang (to-draw f-to-draw) (on-tick add1))
-        body: FUNCTION_MY_ANIMATE.children[2]
+        body: FUNCTION_MY_ANIMATE.children[2],
       };
-      assert.deepStrictEqual(tryGetFunctionDef(FUNCTION_MY_ANIMATE), myAnimateDef);
+      assert.deepStrictEqual(
+        tryGetFunctionDef(FUNCTION_MY_ANIMATE),
+        myAnimateDef
+      );
     });
   });
 });
@@ -350,7 +371,7 @@ describe('Linter class', () => {
     `;
 
     const parser = new Parser(example);
-    while(parser.status === ParserStatus.InProgress) {
+    while (parser.status === ParserStatus.InProgress) {
       parser.advance();
     }
 
@@ -360,25 +381,37 @@ describe('Linter class', () => {
     it('Should find the signature for "do-to-all"', () => {
       doToAllExpected.name = 'do-to-all';
       linter.addSignature();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        doToAllExpected
+      );
     });
 
     it('Should not find a purpose statement for "do-to-all"', () => {
       // doToAllExpected.purposeLines += 0;
       linter.addPurposeLines();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        doToAllExpected
+      );
     });
 
     it('Should find two tests and a function definition for "do-to-all"', () => {
       doToAllExpected.tests = 2;
       linter.addTests();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        doToAllExpected
+      );
     });
 
     it('Should generate warning for missing purpose statement for "do-to-all"', () => {
       doToAllExpected.warnings.push('no purpose statement');
       linter.finalize(linter.requireCurrentFunctionDesign());
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        doToAllExpected
+      );
     });
 
     it('Should find the template "point-temp"', () => {
@@ -386,7 +419,7 @@ describe('Linter class', () => {
         name: 'point-temp',
         argNames: ['p'],
         isTemplate: true,
-        body: TEMPLATE_POINT_TEMP.children[2]
+        body: TEMPLATE_POINT_TEMP.children[2],
       };
       assert.deepStrictEqual(linter.templates, [pointTempDef]);
     });
@@ -395,26 +428,39 @@ describe('Linter class', () => {
     it('Should find the signature for "my-animate"', () => {
       myAnimateExpected.name = 'my-animate';
       linter.addSignature();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        myAnimateExpected
+      );
     });
 
     it('Should find the purpose statement for "my-animate"', () => {
       myAnimateExpected.purposeLines = 1;
       linter.addPurposeLines();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        myAnimateExpected
+      );
     });
 
     it('Should find a big-bang definition for "my-animate"', () => {
       myAnimateExpected.tests = 1000;
       linter.addTests();
-      assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
+      assert.deepStrictEqual(
+        linter.requireCurrentFunctionDesign(),
+        myAnimateExpected
+      );
     });
 
     const generalWarnings: GeneralWarningList = {
       kind: 'General',
-      warnings: []
+      warnings: [],
     };
-    const completedExpected = [generalWarnings, doToAllExpected, myAnimateExpected];
+    const completedExpected = [
+      generalWarnings,
+      doToAllExpected,
+      myAnimateExpected,
+    ];
     it('Should have completed', () => {
       assert.strictEqual(linter.remainingNodes.length, 0);
       linter.finalize(linter.requireCurrentFunctionDesign());
@@ -487,7 +533,7 @@ describe('Linter class', () => {
         (my-build-list/a num empty)))`;
 
     const parser = new Parser(example);
-    while(parser.status === ParserStatus.InProgress) {
+    while (parser.status === ParserStatus.InProgress) {
       parser.advance();
     }
 
@@ -501,12 +547,12 @@ describe('Linter class', () => {
         purposeLines: 1,
         tests: 2,
         warnings: [
-          'within local: unexpected function definition for double-sqr'
-        ]
+          'within local: unexpected function definition for double-sqr',
+        ],
       };
 
-      const doubleSquaresActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'double-squares')
+      const doubleSquaresActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'double-squares'
       );
       assert.deepStrictEqual(doubleSquaresActual, doubleSquaresExpected);
     });
@@ -518,12 +564,12 @@ describe('Linter class', () => {
         purposeLines: 2,
         tests: 2,
         warnings: [
-          'within local def of multiply-by-rate: no purpose statement'
-        ]
+          'within local def of multiply-by-rate: no purpose statement',
+        ],
       };
 
-      const usdToEuroActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'usd-to-euro')
+      const usdToEuroActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'usd-to-euro'
       );
       assert.deepStrictEqual(usdToEuroActual, usdToEuroExpected);
     });
@@ -534,26 +580,26 @@ describe('Linter class', () => {
         name: 'slope',
         purposeLines: 1,
         tests: 2,
-        warnings: []
+        warnings: [],
       };
 
-      const slopeActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'slope')
+      const slopeActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'slope'
       );
       assert.deepStrictEqual(slopeActual, slopeExpected);
     });
-    
+
     it('Should generate no warnings for the local definition in "my-build-list"', () => {
       const fnDesignExpected: FunctionDesign = {
         kind: 'FunctionDesign',
         name: 'my-build-list',
         purposeLines: 2,
         tests: 2,
-        warnings: []
+        warnings: [],
       };
 
-      const fnDesignActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'my-build-list')
+      const fnDesignActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'my-build-list'
       );
       assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
     });
@@ -576,7 +622,7 @@ describe('Linter class', () => {
       (ormap (λ (neighbor) (string=? neighbor pagename)) (page-links wp)))`;
 
     const parser = new Parser(example);
-    while(parser.status === ParserStatus.InProgress) {
+    while (parser.status === ParserStatus.InProgress) {
       parser.advance();
     }
 
@@ -589,11 +635,11 @@ describe('Linter class', () => {
         name: 'inlinks-count',
         purposeLines: 1,
         tests: 2,
-        warnings: []
+        warnings: [],
       };
 
-      const fnDesignActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'inlinks-count')
+      const fnDesignActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'inlinks-count'
       );
       assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
     });
@@ -604,11 +650,11 @@ describe('Linter class', () => {
         name: 'links-to-page?',
         purposeLines: 1,
         tests: 2,
-        warnings: []
+        warnings: [],
       };
 
-      const fnDesignActual = linter.messages.find(e =>
-        (e.kind === 'FunctionDesign' && e.name === 'links-to-page?')
+      const fnDesignActual = linter.messages.find(
+        e => e.kind === 'FunctionDesign' && e.name === 'links-to-page?'
       );
       assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
     });
