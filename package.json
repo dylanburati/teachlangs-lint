@@ -1,5 +1,5 @@
 {
-  "name": "teachlangs-lint",
+  "name": "@dylanburati/teachlangs-lint",
   "version": "1.0.0",
   "description": "Static code analysis tool for Racket's teaching languages",
   "main": "./dist/index.js",
