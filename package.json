@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "bin": "./dist/cli.js",
   "scripts": {
-    "test": "mocha dist/test"
+    "test": "tsc --module commonjs && mocha dist/test"
   },
   "author": "Dylan Burati",
   "license": "MIT",

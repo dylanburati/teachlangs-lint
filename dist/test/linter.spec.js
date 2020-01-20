@@ -409,7 +409,14 @@ describe('Linter class', () => {
     (define (usd-to-euro lon rate)
       (local [; multiply-by-rate : Number -> Number
               (define (multiply-by-rate x)
-                (* x rate))]
+                (* x rate))
+              
+              ; do-nothing/a: Any -> Any
+              ; Accumulator: does nothing
+              (define (do-nothing/a any)
+                (if (zero? (random 10))
+                    any
+                    (do-nothing/a any)))]
         (map multiply-by-rate lon)))
     
     ; slope : Posn Posn -> Number
@@ -419,7 +426,23 @@ describe('Linter class', () => {
     (define (slope p1 p2)
       (local [(define RISE (- (posn-y p1) (posn-y p2)))
               (define RUN (- (posn-x p1) (posn-x p2)))]
-        (/ RISE RUN)))`;
+        (/ RISE RUN)))
+        
+    ; my-build-list : (X) Nat [Nat -> X] -> [List-of X]
+    ; Reimplements build-list, generating a list of the form
+    ; (list (f 0) (f 1) ... (f n))
+    (check-expect (my-build-list 4 sqr) (list 0 1 4 9))
+    (check-expect (my-build-list 0 identity) empty)
+    (define (my-build-list num func)
+      (local [; my-build-list/a : Nat [List-of X] -> [List-of X]
+              ; Reimplements build-list, generating a list of the form
+              ; Accumulator: the list of elements after this one in the list
+              (define (my-build-list/a n lox)
+                (cond
+                  [(zero? n) lox]
+                  [(positive? n) (my-build-list/a (sub1 n)
+                                                  (cons (func (sub1 n)) lox))]))]
+        (my-build-list/a num empty)))`;
         const parser = new Parser(example);
         while (parser.status === ParserStatus.InProgress) {
             parser.advance();
@@ -463,49 +486,60 @@ describe('Linter class', () => {
             const slopeActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'slope'));
             assert.deepStrictEqual(slopeActual, slopeExpected);
         });
-        describe('Example 3 (multi-semicolon comments)', () => {
-            const example = `
-      ;; inlinks-count : String Wiki -> Nat
-      ;; Count the number of inlinks in a given page
-      (check-expect (inlinks-count "any" WIKI-EMPTY) 0)
-      (check-expect (inlinks-count "NEU" WIKI-FULL) 3)
-      (define (inlinks-count pagename wiki)
-        (foldr (λ (wp sofar) (if (links-to-page? wp pagename) (add1 sofar) sofar)) 0 wiki))
+        it('Should generate no warnings for the local definition in "my-build-list"', () => {
+            const fnDesignExpected = {
+                kind: 'FunctionDesign',
+                name: 'my-build-list',
+                purposeLines: 2,
+                tests: 2,
+                warnings: []
+            };
+            const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'my-build-list'));
+            assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
+        });
+    });
+    describe('Example 3 (multi-semicolon comments)', () => {
+        const example = `
+    ;; inlinks-count : String Wiki -> Nat
+    ;; Count the number of inlinks in a given page
+    (check-expect (inlinks-count "any" WIKI-EMPTY) 0)
+    (check-expect (inlinks-count "NEU" WIKI-FULL) 3)
+    (define (inlinks-count pagename wiki)
+      (foldr (λ (wp sofar) (if (links-to-page? wp pagename) (add1 sofar) sofar)) 0 wiki))
 
-      ;;; links-to-page? : WebPage String -> Boolean
-      ;;; Does the given page link to a page with the given name?
-      (check-expect (links-to-page? PAGE-KHOURY "Computers") false)
-      (check-expect (links-to-page? PAGE-NEU "Boston") true)
-      (define (links-to-page? wp pagename)
-        (ormap (λ (neighbor) (string=? neighbor pagename)) (page-links wp)))`;
-            const parser = new Parser(example);
-            while (parser.status === ParserStatus.InProgress) {
-                parser.advance();
-            }
-            const linter = Linter.fromParser(parser);
-            linter.lint();
-            it('Should generate no warnings for "inlinks-count"', () => {
-                const fnDesignExpected = {
-                    kind: 'FunctionDesign',
-                    name: 'inlinks-count',
-                    purposeLines: 1,
-                    tests: 2,
-                    warnings: []
-                };
-                const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'inlinks-count'));
-                assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
-            });
-            it('Should generate no warnings for "links-to-page?"', () => {
-                const fnDesignExpected = {
-                    kind: 'FunctionDesign',
-                    name: 'links-to-page?',
-                    purposeLines: 1,
-                    tests: 2,
-                    warnings: []
-                };
-                const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'links-to-page?'));
-                assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
-            });
+    ;;; links-to-page? : WebPage String -> Boolean
+    ;;; Does the given page link to a page with the given name?
+    (check-expect (links-to-page? PAGE-KHOURY "Computers") false)
+    (check-expect (links-to-page? PAGE-NEU "Boston") true)
+    (define (links-to-page? wp pagename)
+      (ormap (λ (neighbor) (string=? neighbor pagename)) (page-links wp)))`;
+        const parser = new Parser(example);
+        while (parser.status === ParserStatus.InProgress) {
+            parser.advance();
+        }
+        const linter = Linter.fromParser(parser);
+        linter.lint();
+        it('Should generate no warnings for "inlinks-count"', () => {
+            const fnDesignExpected = {
+                kind: 'FunctionDesign',
+                name: 'inlinks-count',
+                purposeLines: 1,
+                tests: 2,
+                warnings: []
+            };
+            const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'inlinks-count'));
+            assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
+        });
+        it('Should generate no warnings for "links-to-page?"', () => {
+            const fnDesignExpected = {
+                kind: 'FunctionDesign',
+                name: 'links-to-page?',
+                purposeLines: 1,
+                tests: 2,
+                warnings: []
+            };
+            const fnDesignActual = linter.messages.find(e => (e.kind === 'FunctionDesign' && e.name === 'links-to-page?'));
+            assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
         });
     });
 });
