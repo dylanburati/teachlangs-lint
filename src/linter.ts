@@ -1,4 +1,3 @@
-import { isMatch, matches, flow } from 'lodash';
 import {
   Atom, Expr, RacketNode, Parser, ParserStatus, racketNodeToString
 } from './parser';
@@ -32,6 +31,10 @@ function emptyFunctionDesign(): FunctionDesign {
     tests: 0,
     warnings: []
   };
+}
+
+function isMatch(object: object, source: object): boolean {
+  return Object.entries(source).every(([key, val]) => (object as any)[key] === val);
 }
 
 function tryParseSignature(node: RacketNode): FunctionDesign | false {

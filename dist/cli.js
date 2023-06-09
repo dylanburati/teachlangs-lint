@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,14 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { readFile } from 'fs';
-import * as readline from 'readline';
-import * as yargs from 'yargs';
-import { Parser, ParserStatus } from './parser';
-import { Linter } from './linter';
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = require("fs");
+const readline = require("readline");
+const yargs = require("yargs");
+const parser_1 = require("./parser");
+const linter_1 = require("./linter");
 function readFileOptional(path) {
     return new Promise((resolve) => {
-        readFile(path, { encoding: 'utf8' }, (err, data) => {
+        fs_1.readFile(path, { encoding: 'utf8' }, (err, data) => {
             if (err) {
                 resolve(false);
                 return;
@@ -37,17 +39,17 @@ function printWarnings(list) {
     });
 }
 function lint(fileContent) {
-    const parser = new Parser(fileContent);
-    while (parser.status === ParserStatus.InProgress) {
+    const parser = new parser_1.Parser(fileContent);
+    while (parser.status === parser_1.ParserStatus.InProgress) {
         parser.advance();
     }
-    if (parser.status === ParserStatus.Done) {
-        printWarnings(Linter.fromParser(parser).lint());
+    if (parser.status === parser_1.ParserStatus.Done) {
+        printWarnings(linter_1.Linter.fromParser(parser).lint());
     }
-    else if (parser.status === ParserStatus.FoundTrailing) {
+    else if (parser.status === parser_1.ParserStatus.FoundTrailing) {
         console.log('Syntax error in file: trailing characters');
     }
-    else if (parser.status === ParserStatus.FoundUnclosed) {
+    else if (parser.status === parser_1.ParserStatus.FoundUnclosed) {
         console.log('Syntax error in file: unmatched parenthesis or bracket');
     }
 }

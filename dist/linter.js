@@ -1,5 +1,6 @@
-import { isMatch } from 'lodash';
-import { Parser, ParserStatus, racketNodeToString } from './parser';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const parser_1 = require("./parser");
 function emptyFunctionDesign() {
     return {
         kind: 'FunctionDesign',
@@ -9,14 +10,18 @@ function emptyFunctionDesign() {
         warnings: []
     };
 }
+exports.emptyFunctionDesign = emptyFunctionDesign;
+function isMatch(object, source) {
+    return Object.entries(source).every(([key, val]) => object[key] === val);
+}
 function tryParseSignature(node) {
     if (node.kind === 'LineComment' && node.source.includes(':') && node.source.includes('->')) {
         const commentAsSig = `(${node.source.replace(/^[; ]+/, '').replace(':', ' : ')})`;
-        const parser = new Parser(commentAsSig);
-        while (parser.status === ParserStatus.InProgress) {
+        const parser = new parser_1.Parser(commentAsSig);
+        while (parser.status === parser_1.ParserStatus.InProgress) {
             parser.advance();
         }
-        if (parser.status === ParserStatus.Done && parser.root.children.length > 0) {
+        if (parser.status === parser_1.ParserStatus.Done && parser.root.children.length > 0) {
             const parsedSig = parser.root.children[0];
             const colon = { kind: 'Variable', source: ':' };
             const arrow = { kind: 'Variable', source: '->' };
@@ -42,6 +47,7 @@ function tryParseSignature(node) {
     }
     return false;
 }
+exports.tryParseSignature = tryParseSignature;
 function racketNodeIsConstant(node) {
     const define = { kind: 'Variable', source: 'define' };
     return (node.kind === 'Expression' &&
@@ -49,6 +55,7 @@ function racketNodeIsConstant(node) {
         node.children[1].kind === 'Variable' &&
         /^[A-Z0-9-]+$/.test(node.children[1].source));
 }
+exports.racketNodeIsConstant = racketNodeIsConstant;
 function racketNodeHasTemplateVars(node) {
     if (node.kind === 'Variable') {
         return /^\.{2,6}$/.test(node.source);
@@ -58,6 +65,7 @@ function racketNodeHasTemplateVars(node) {
     }
     return false;
 }
+exports.racketNodeHasTemplateVars = racketNodeHasTemplateVars;
 const TEST_FUNCTION_NAMES = [
     'check-expect',
     'check-random',
@@ -78,6 +86,7 @@ function tryGetTestDef(node) {
     }
     return false;
 }
+exports.tryGetTestDef = tryGetTestDef;
 function searchRacketFunctionCalls(node, stopWhen) {
     const search = {
         calls: [],
@@ -148,6 +157,7 @@ function tryGetFunctionDef(node) {
     }
     return false;
 }
+exports.tryGetFunctionDef = tryGetFunctionDef;
 class ChainedCond {
     constructor(predicate, action) {
         this.actionArg = predicate();
@@ -181,7 +191,7 @@ class Linter {
         }
     }
     static fromParser(parser) {
-        if (parser.status !== ParserStatus.Done) {
+        if (parser.status !== parser_1.ParserStatus.Done) {
             throw new Error("Can't create linter for unfinished parser");
         }
         return new Linter(parser.root.children.slice());
@@ -294,7 +304,7 @@ class Linter {
                 }
             })
                 .or(() => tryGetTestDef(node), (testDef) => {
-                warningList.warnings.push(`unexpected test: ${racketNodeToString(node)}`);
+                warningList.warnings.push(`unexpected test: ${parser_1.racketNodeToString(node)}`);
             });
         }
     }
@@ -358,11 +368,11 @@ class Linter {
                 .or(() => tryGetTestDef(node), (testDef) => {
                 fnDesign.tests += 1;
                 if (findRacketFunctionCall(testDef.actual, (fnCall) => (fnCall.name === fnDesign.name)) == null) {
-                    fnDesign.warnings.push(`expected test to call ${fnDesign.name}: ${racketNodeToString(node)}`);
+                    fnDesign.warnings.push(`expected test to call ${fnDesign.name}: ${parser_1.racketNodeToString(node)}`);
                 }
             });
         }
     }
 }
-export { emptyFunctionDesign, tryParseSignature, racketNodeIsConstant, racketNodeHasTemplateVars, tryGetTestDef, tryGetFunctionDef, Linter, };
+exports.Linter = Linter;
 //# sourceMappingURL=linter.js.map

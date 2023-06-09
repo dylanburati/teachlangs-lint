@@ -1,6 +1,6 @@
 {
   "name": "@dylanburati/teachlangs-lint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Static code analysis tool for Racket's teaching languages",
   "main": "./dist/index.js",
   "bin": "./dist/cli.js",
@@ -10,7 +10,6 @@
   "author": "Dylan Burati",
   "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.15",
     "mocha": "^6.2.1",
     "yargs": "^14.2.0"
   },

@@ -1,7 +1,9 @@
-import * as assert from 'assert';
-import { describe, it } from 'mocha';
-import { emptyFunctionDesign, Linter, racketNodeHasTemplateVars, racketNodeIsConstant, tryGetFunctionDef, tryGetTestDef, tryParseSignature, } from '../linter';
-import { Parser, ParserStatus } from '../parser';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const assert = require("assert");
+const mocha_1 = require("mocha");
+const linter_1 = require("../linter");
+const parser_1 = require("../parser");
 const CONSTANT_GREETING = {
     kind: 'Expression',
     children: [
@@ -144,121 +146,121 @@ const TEST_CHECK_WITHIN = {
         { kind: 'Number', source: '0.000001' },
     ],
 };
-describe('Internal function', () => {
-    describe(tryParseSignature.name, () => {
-        it('Should return false when given something other than a line comment', () => {
+mocha_1.describe('Internal function', () => {
+    mocha_1.describe(linter_1.tryParseSignature.name, () => {
+        mocha_1.it('Should return false when given something other than a line comment', () => {
             const nonSignature = {
                 kind: 'String',
                 source: '""',
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
         });
-        it('Should return false when the comment does not have a colon and arrow', () => {
+        mocha_1.it('Should return false when the comment does not have a colon and arrow', () => {
             const nonSignature = {
                 kind: 'LineComment',
                 source: ';    \t',
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
         });
-        it('Should return false when the comment does not have an arrow', () => {
+        mocha_1.it('Should return false when the comment does not have an arrow', () => {
             const nonSignature = {
                 kind: 'LineComment',
                 source: '; complete? : [X X -> X] [List-of Task]',
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
         });
-        it('Should return false when the comment has mismatched parentheses', () => {
+        mocha_1.it('Should return false when the comment has mismatched parentheses', () => {
             const nonSignature = {
                 kind: 'LineComment',
                 source: '; read-syntax : (()(() -> ',
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
         });
-        it('Should return false when the comment has multiple words before the colon', () => {
+        mocha_1.it('Should return false when the comment has multiple words before the colon', () => {
             const nonSignature = {
                 kind: 'LineComment',
                 source: "; Ceci n'est pas un signature : A -> B",
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
         });
-        it('Should return false when there is not exactly 1 arrow outside parentheses `->`', () => {
+        mocha_1.it('Should return false when there is not exactly 1 arrow outside parentheses `->`', () => {
             const nonSignature = {
                 kind: 'LineComment',
                 source: '; Returns: (nothing->something Null)',
             };
-            assert.strictEqual(tryParseSignature(nonSignature), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature), false);
             const nonSignature2 = {
                 kind: 'LineComment',
                 source: '; chain: 1 -> 2 -> 3',
             };
-            assert.strictEqual(tryParseSignature(nonSignature2), false);
+            assert.strictEqual(linter_1.tryParseSignature(nonSignature2), false);
         });
-        it('Should return a new FunctionDesign for the "nonsense" example', () => {
+        mocha_1.it('Should return a new FunctionDesign for the "nonsense" example', () => {
             const signature = {
                 kind: 'LineComment',
                 source: '; nonsense : String Number String -> String\n',
             };
-            const fnDesign = emptyFunctionDesign();
+            const fnDesign = linter_1.emptyFunctionDesign();
             fnDesign.name = 'nonsense';
-            assert.deepStrictEqual(tryParseSignature(signature), fnDesign);
+            assert.deepStrictEqual(linter_1.tryParseSignature(signature), fnDesign);
         });
-        it('Should return a new FunctionDesign for the "draw-dot" example', () => {
+        mocha_1.it('Should return a new FunctionDesign for the "draw-dot" example', () => {
             const signature = {
                 kind: 'LineComment',
                 source: ';draw-dot:(make-posn Real Real)-> Image\n',
             };
-            const fnDesign = emptyFunctionDesign();
+            const fnDesign = linter_1.emptyFunctionDesign();
             fnDesign.name = 'draw-dot';
-            assert.deepStrictEqual(tryParseSignature(signature), fnDesign);
+            assert.deepStrictEqual(linter_1.tryParseSignature(signature), fnDesign);
         });
     });
-    describe(racketNodeIsConstant.name, () => {
-        it('Should return false for non-constants', () => {
-            assert.strictEqual(racketNodeIsConstant(FUNCTION_DO_TO_ALL), false);
-            assert.strictEqual(racketNodeIsConstant(TEST_CHECK_EXPECT), false);
-            assert.strictEqual(racketNodeIsConstant(TEST_CHECK_WITHIN), false);
+    mocha_1.describe(linter_1.racketNodeIsConstant.name, () => {
+        mocha_1.it('Should return false for non-constants', () => {
+            assert.strictEqual(linter_1.racketNodeIsConstant(FUNCTION_DO_TO_ALL), false);
+            assert.strictEqual(linter_1.racketNodeIsConstant(TEST_CHECK_EXPECT), false);
+            assert.strictEqual(linter_1.racketNodeIsConstant(TEST_CHECK_WITHIN), false);
         });
-        it('Should return true for constants', () => {
-            assert.strictEqual(racketNodeIsConstant(CONSTANT_GREETING), true);
-        });
-    });
-    describe(racketNodeHasTemplateVars.name, () => {
-        it('Should return false for anything that does not contain template vars', () => {
-            assert.strictEqual(racketNodeHasTemplateVars(FUNCTION_DO_TO_ALL), false);
-            assert.strictEqual(racketNodeHasTemplateVars(TEST_CHECK_EXPECT), false);
-            assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[1]), false);
-        });
-        it('Should return true for template functions / function bodies', () => {
-            assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP), true);
-            assert.strictEqual(racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[2]), true);
+        mocha_1.it('Should return true for constants', () => {
+            assert.strictEqual(linter_1.racketNodeIsConstant(CONSTANT_GREETING), true);
         });
     });
-    describe(tryGetTestDef.name, () => {
-        it('Should return false for anything that is not a test', () => {
-            assert.strictEqual(tryGetTestDef(FUNCTION_DO_TO_ALL), false);
-            assert.strictEqual(tryGetTestDef(FUNCTION_MY_ANIMATE), false);
-            assert.strictEqual(tryGetTestDef(TEMPLATE_POINT_TEMP), false);
+    mocha_1.describe(linter_1.racketNodeHasTemplateVars.name, () => {
+        mocha_1.it('Should return false for anything that does not contain template vars', () => {
+            assert.strictEqual(linter_1.racketNodeHasTemplateVars(FUNCTION_DO_TO_ALL), false);
+            assert.strictEqual(linter_1.racketNodeHasTemplateVars(TEST_CHECK_EXPECT), false);
+            assert.strictEqual(linter_1.racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[1]), false);
         });
-        it('Should return a new TestDef for the "check-expect" example', () => {
+        mocha_1.it('Should return true for template functions / function bodies', () => {
+            assert.strictEqual(linter_1.racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP), true);
+            assert.strictEqual(linter_1.racketNodeHasTemplateVars(TEMPLATE_POINT_TEMP.children[2]), true);
+        });
+    });
+    mocha_1.describe(linter_1.tryGetTestDef.name, () => {
+        mocha_1.it('Should return false for anything that is not a test', () => {
+            assert.strictEqual(linter_1.tryGetTestDef(FUNCTION_DO_TO_ALL), false);
+            assert.strictEqual(linter_1.tryGetTestDef(FUNCTION_MY_ANIMATE), false);
+            assert.strictEqual(linter_1.tryGetTestDef(TEMPLATE_POINT_TEMP), false);
+        });
+        mocha_1.it('Should return a new TestDef for the "check-expect" example', () => {
             const testDef = {
                 actual: TEST_CHECK_EXPECT.children[1],
             };
-            assert.deepStrictEqual(tryGetTestDef(TEST_CHECK_EXPECT), testDef);
+            assert.deepStrictEqual(linter_1.tryGetTestDef(TEST_CHECK_EXPECT), testDef);
         });
-        it('Should return a new TestDef for the "check-within" example', () => {
+        mocha_1.it('Should return a new TestDef for the "check-within" example', () => {
             const testDef = {
                 actual: TEST_CHECK_WITHIN.children[1],
             };
-            assert.deepStrictEqual(tryGetTestDef(TEST_CHECK_WITHIN), testDef);
+            assert.deepStrictEqual(linter_1.tryGetTestDef(TEST_CHECK_WITHIN), testDef);
         });
     });
-    describe(tryGetFunctionDef.name, () => {
-        it('Should return false for anything that is not a function', () => {
-            assert.strictEqual(tryGetFunctionDef(TEST_CHECK_EXPECT), false);
-            assert.strictEqual(tryGetFunctionDef(TEST_CHECK_WITHIN), false);
-            assert.strictEqual(tryGetFunctionDef(FUNCTION_MY_ANIMATE.children[2]), false);
+    mocha_1.describe(linter_1.tryGetFunctionDef.name, () => {
+        mocha_1.it('Should return false for anything that is not a function', () => {
+            assert.strictEqual(linter_1.tryGetFunctionDef(TEST_CHECK_EXPECT), false);
+            assert.strictEqual(linter_1.tryGetFunctionDef(TEST_CHECK_WITHIN), false);
+            assert.strictEqual(linter_1.tryGetFunctionDef(FUNCTION_MY_ANIMATE.children[2]), false);
         });
-        it('Should return a new FunctionDef when given a template function', () => {
+        mocha_1.it('Should return a new FunctionDef when given a template function', () => {
             const pointTempDef = {
                 name: 'point-temp',
                 argNames: ['p'],
@@ -266,9 +268,9 @@ describe('Internal function', () => {
                 // ((posn-x p) ... (posn-y p))
                 body: TEMPLATE_POINT_TEMP.children[2],
             };
-            assert.deepStrictEqual(tryGetFunctionDef(TEMPLATE_POINT_TEMP), pointTempDef);
+            assert.deepStrictEqual(linter_1.tryGetFunctionDef(TEMPLATE_POINT_TEMP), pointTempDef);
         });
-        it('Should return a new FunctionDef for the "do-to-all" example', () => {
+        mocha_1.it('Should return a new FunctionDef for the "do-to-all" example', () => {
             const doToAllDef = {
                 name: 'do-to-all',
                 argNames: ['f', '..lox..'],
@@ -276,9 +278,9 @@ describe('Internal function', () => {
                 // (map f ..lox..)
                 body: FUNCTION_DO_TO_ALL.children[2],
             };
-            assert.deepStrictEqual(tryGetFunctionDef(FUNCTION_DO_TO_ALL), doToAllDef);
+            assert.deepStrictEqual(linter_1.tryGetFunctionDef(FUNCTION_DO_TO_ALL), doToAllDef);
         });
-        it('Should return a new FunctionDef for the "my-animate" example', () => {
+        mocha_1.it('Should return a new FunctionDef for the "my-animate" example', () => {
             const myAnimateDef = {
                 name: 'my-animate',
                 argNames: ['f-to-draw'],
@@ -286,12 +288,12 @@ describe('Internal function', () => {
                 // (big-bang (to-draw f-to-draw) (on-tick add1))
                 body: FUNCTION_MY_ANIMATE.children[2],
             };
-            assert.deepStrictEqual(tryGetFunctionDef(FUNCTION_MY_ANIMATE), myAnimateDef);
+            assert.deepStrictEqual(linter_1.tryGetFunctionDef(FUNCTION_MY_ANIMATE), myAnimateDef);
         });
     });
 });
-describe('Linter class', () => {
-    describe('Example 1', () => {
+mocha_1.describe('Linter class', () => {
+    mocha_1.describe('Example 1', () => {
         const example = `
     ; do-to-all : (X Y) [X -> Y] [List-of X] -> [List-of Y]
     (check-expect (do-to-all sqrt empty) empty)
@@ -319,33 +321,33 @@ describe('Linter class', () => {
         [to-draw f-to-draw]
         [on-tick add1]))
     `;
-        const parser = new Parser(example);
-        while (parser.status === ParserStatus.InProgress) {
+        const parser = new parser_1.Parser(example);
+        while (parser.status === parser_1.ParserStatus.InProgress) {
             parser.advance();
         }
-        const linter = Linter.fromParser(parser);
-        const doToAllExpected = emptyFunctionDesign();
-        it('Should find the signature for "do-to-all"', () => {
+        const linter = linter_1.Linter.fromParser(parser);
+        const doToAllExpected = linter_1.emptyFunctionDesign();
+        mocha_1.it('Should find the signature for "do-to-all"', () => {
             doToAllExpected.name = 'do-to-all';
             linter.addSignature();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
         });
-        it('Should not find a purpose statement for "do-to-all"', () => {
+        mocha_1.it('Should not find a purpose statement for "do-to-all"', () => {
             // doToAllExpected.purposeLines += 0;
             linter.addPurposeLines();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
         });
-        it('Should find two tests and a function definition for "do-to-all"', () => {
+        mocha_1.it('Should find two tests and a function definition for "do-to-all"', () => {
             doToAllExpected.tests = 2;
             linter.addTests();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
         });
-        it('Should generate warning for missing purpose statement for "do-to-all"', () => {
+        mocha_1.it('Should generate warning for missing purpose statement for "do-to-all"', () => {
             doToAllExpected.warnings.push('no purpose statement');
             linter.finalize(linter.requireCurrentFunctionDesign());
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), doToAllExpected);
         });
-        it('Should find the template "point-temp"', () => {
+        mocha_1.it('Should find the template "point-temp"', () => {
             const pointTempDef = {
                 name: 'point-temp',
                 argNames: ['p'],
@@ -354,18 +356,18 @@ describe('Linter class', () => {
             };
             assert.deepStrictEqual(linter.templates, [pointTempDef]);
         });
-        const myAnimateExpected = emptyFunctionDesign();
-        it('Should find the signature for "my-animate"', () => {
+        const myAnimateExpected = linter_1.emptyFunctionDesign();
+        mocha_1.it('Should find the signature for "my-animate"', () => {
             myAnimateExpected.name = 'my-animate';
             linter.addSignature();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
         });
-        it('Should find the purpose statement for "my-animate"', () => {
+        mocha_1.it('Should find the purpose statement for "my-animate"', () => {
             myAnimateExpected.purposeLines = 1;
             linter.addPurposeLines();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
         });
-        it('Should find a big-bang definition for "my-animate"', () => {
+        mocha_1.it('Should find a big-bang definition for "my-animate"', () => {
             myAnimateExpected.tests = 1000;
             linter.addTests();
             assert.deepStrictEqual(linter.requireCurrentFunctionDesign(), myAnimateExpected);
@@ -379,18 +381,18 @@ describe('Linter class', () => {
             doToAllExpected,
             myAnimateExpected,
         ];
-        it('Should have completed', () => {
+        mocha_1.it('Should have completed', () => {
             assert.strictEqual(linter.remainingNodes.length, 0);
             linter.finalize(linter.requireCurrentFunctionDesign());
             assert.deepStrictEqual(linter.messages, completedExpected);
         });
-        it('Should have the same output using lint()', () => {
-            const linter2 = Linter.fromParser(parser);
+        mocha_1.it('Should have the same output using lint()', () => {
+            const linter2 = linter_1.Linter.fromParser(parser);
             linter2.lint();
             assert.deepStrictEqual(linter2.messages, completedExpected);
         });
     });
-    describe('Example 2 (locals)', () => {
+    mocha_1.describe('Example 2 (locals)', () => {
         const example = `
     ; double-squares : Nat -> [List-of Nat]
     ; The first n double squares
@@ -447,13 +449,13 @@ describe('Linter class', () => {
                   [(positive? n) (my-build-list/a (sub1 n)
                                                   (cons (func (sub1 n)) lox))]))]
         (my-build-list/a num empty)))`;
-        const parser = new Parser(example);
-        while (parser.status === ParserStatus.InProgress) {
+        const parser = new parser_1.Parser(example);
+        while (parser.status === parser_1.ParserStatus.InProgress) {
             parser.advance();
         }
-        const linter = Linter.fromParser(parser);
+        const linter = linter_1.Linter.fromParser(parser);
         linter.lint();
-        it('Should generate a warning for the local definition in "double-squares"', () => {
+        mocha_1.it('Should generate a warning for the local definition in "double-squares"', () => {
             const doubleSquaresExpected = {
                 kind: 'FunctionDesign',
                 name: 'double-squares',
@@ -466,7 +468,7 @@ describe('Linter class', () => {
             const doubleSquaresActual = linter.messages.find(e => e.kind === 'FunctionDesign' && e.name === 'double-squares');
             assert.deepStrictEqual(doubleSquaresActual, doubleSquaresExpected);
         });
-        it('Should generate a warning for the local definition in "usd-to-euro"', () => {
+        mocha_1.it('Should generate a warning for the local definition in "usd-to-euro"', () => {
             const usdToEuroExpected = {
                 kind: 'FunctionDesign',
                 name: 'usd-to-euro',
@@ -479,7 +481,7 @@ describe('Linter class', () => {
             const usdToEuroActual = linter.messages.find(e => e.kind === 'FunctionDesign' && e.name === 'usd-to-euro');
             assert.deepStrictEqual(usdToEuroActual, usdToEuroExpected);
         });
-        it('Should generate no warnings for the local definition in "slope"', () => {
+        mocha_1.it('Should generate no warnings for the local definition in "slope"', () => {
             const slopeExpected = {
                 kind: 'FunctionDesign',
                 name: 'slope',
@@ -490,7 +492,7 @@ describe('Linter class', () => {
             const slopeActual = linter.messages.find(e => e.kind === 'FunctionDesign' && e.name === 'slope');
             assert.deepStrictEqual(slopeActual, slopeExpected);
         });
-        it('Should generate no warnings for the local definition in "my-build-list"', () => {
+        mocha_1.it('Should generate no warnings for the local definition in "my-build-list"', () => {
             const fnDesignExpected = {
                 kind: 'FunctionDesign',
                 name: 'my-build-list',
@@ -502,7 +504,7 @@ describe('Linter class', () => {
             assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
         });
     });
-    describe('Example 3 (multi-semicolon comments)', () => {
+    mocha_1.describe('Example 3 (multi-semicolon comments)', () => {
         const example = `
     ;; inlinks-count : String Wiki -> Nat
     ;; Count the number of inlinks in a given page
@@ -517,13 +519,13 @@ describe('Linter class', () => {
     (check-expect (links-to-page? PAGE-NEU "Boston") true)
     (define (links-to-page? wp pagename)
       (ormap (λ (neighbor) (string=? neighbor pagename)) (page-links wp)))`;
-        const parser = new Parser(example);
-        while (parser.status === ParserStatus.InProgress) {
+        const parser = new parser_1.Parser(example);
+        while (parser.status === parser_1.ParserStatus.InProgress) {
             parser.advance();
         }
-        const linter = Linter.fromParser(parser);
+        const linter = linter_1.Linter.fromParser(parser);
         linter.lint();
-        it('Should generate no warnings for "inlinks-count"', () => {
+        mocha_1.it('Should generate no warnings for "inlinks-count"', () => {
             const fnDesignExpected = {
                 kind: 'FunctionDesign',
                 name: 'inlinks-count',
@@ -534,7 +536,7 @@ describe('Linter class', () => {
             const fnDesignActual = linter.messages.find(e => e.kind === 'FunctionDesign' && e.name === 'inlinks-count');
             assert.deepStrictEqual(fnDesignActual, fnDesignExpected);
         });
-        it('Should generate no warnings for "links-to-page?"', () => {
+        mocha_1.it('Should generate no warnings for "links-to-page?"', () => {
             const fnDesignExpected = {
                 kind: 'FunctionDesign',
                 name: 'links-to-page?',

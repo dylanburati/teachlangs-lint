@@ -1,9 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function racketNodeToString(node) {
     if (node.kind === 'Expression') {
         return `(${node.children.map(racketNodeToString).join(' ')})`;
     }
     return node.source;
 }
+exports.racketNodeToString = racketNodeToString;
 // Returns true if the first pair starts before the second, or if they have
 // the same start point but the first is at least as long as the second.
 function compareStringIndices(indices1, indices2) {
@@ -13,6 +16,7 @@ function compareStringIndices(indices1, indices2) {
     return (indices1.index < indices2.index) ||
         (indices1.index === indices2.index && indices1.length >= indices2.length);
 }
+exports.compareStringIndices = compareStringIndices;
 function normalizeRegExpExec(rexec) {
     return {
         index: rexec.index,
@@ -52,6 +56,7 @@ function findNearestRacketNode(code) {
         span: matchFound
     };
 }
+exports.findNearestRacketNode = findNearestRacketNode;
 function emptyExpression() {
     return {
         kind: 'Expression',
@@ -65,6 +70,7 @@ var ParserStatus;
     ParserStatus[ParserStatus["FoundUnclosed"] = 2] = "FoundUnclosed";
     ParserStatus[ParserStatus["FoundTrailing"] = 3] = "FoundTrailing";
 })(ParserStatus || (ParserStatus = {}));
+exports.ParserStatus = ParserStatus;
 /**
  * Class to incrementally parse the given Student Language string, and store
  * the syntax tree under `root`.
@@ -124,5 +130,5 @@ class Parser {
         return null;
     }
 }
-export { racketNodeToString, compareStringIndices, findNearestRacketNode, ParserStatus, Parser };
+exports.Parser = Parser;
 //# sourceMappingURL=parser.js.map

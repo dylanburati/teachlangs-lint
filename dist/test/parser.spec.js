@@ -1,30 +1,32 @@
-import * as assert from 'assert';
-import { describe, it } from 'mocha';
-import { compareStringIndices, findNearestRacketNode, ParserStatus, Parser } from '../parser';
-describe('Internal function', () => {
-    describe(compareStringIndices.name, () => {
-        it('Should return false when the first pair is null', () => {
-            assert.strictEqual(compareStringIndices(null, { index: 1, length: 4 }), false);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const assert = require("assert");
+const mocha_1 = require("mocha");
+const parser_1 = require("../parser");
+mocha_1.describe('Internal function', () => {
+    mocha_1.describe(parser_1.compareStringIndices.name, () => {
+        mocha_1.it('Should return false when the first pair is null', () => {
+            assert.strictEqual(parser_1.compareStringIndices(null, { index: 1, length: 4 }), false);
         });
-        it('Should return true when the first pair starts before the second', () => {
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 2, length: 8 }), true);
+        mocha_1.it('Should return true when the first pair starts before the second', () => {
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 2, length: 8 }), true);
         });
-        it('Should return true when the second pair is a prefix of the first', () => {
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 2 }), true);
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 4 }), true);
+        mocha_1.it('Should return true when the second pair is a prefix of the first', () => {
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 2 }), true);
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 4 }), true);
         });
-        it('Should return false when the first pair is a strict prefix of the second', () => {
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 5 }), false);
+        mocha_1.it('Should return false when the first pair is a strict prefix of the second', () => {
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 1, length: 5 }), false);
         });
-        it('Should return false when the second pair starts before the first', () => {
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 0, length: 2 }), false);
-            assert.strictEqual(compareStringIndices({ index: 1, length: 4 }, { index: 0, length: 8 }), false);
+        mocha_1.it('Should return false when the second pair starts before the first', () => {
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 0, length: 2 }), false);
+            assert.strictEqual(parser_1.compareStringIndices({ index: 1, length: 4 }, { index: 0, length: 8 }), false);
         });
     });
-    describe(findNearestRacketNode.name, () => {
-        it('Should return false when the given string is empty or all whitespace', () => {
-            assert.strictEqual(findNearestRacketNode(''), false);
-            assert.strictEqual(findNearestRacketNode(' \t\r\n'), false);
+    mocha_1.describe(parser_1.findNearestRacketNode.name, () => {
+        mocha_1.it('Should return false when the given string is empty or all whitespace', () => {
+            assert.strictEqual(parser_1.findNearestRacketNode(''), false);
+            assert.strictEqual(parser_1.findNearestRacketNode(' \t\r\n'), false);
         });
         const casesMap = new Map();
         casesMap.set('#| <> |#', {
@@ -60,15 +62,15 @@ describe('Internal function', () => {
             span: { index: 0, length: 12, match: 'check-expect' }
         });
         casesMap.forEach((expected, src) => {
-            it(`Should find ${expected.step}`, () => {
-                assert.deepStrictEqual(findNearestRacketNode(src), expected);
+            mocha_1.it(`Should find ${expected.step}`, () => {
+                assert.deepStrictEqual(parser_1.findNearestRacketNode(src), expected);
             });
         });
     });
 });
-describe('Parser class', () => {
-    it('Should parse the "Done" example', () => {
-        const parser = new Parser('(+ 2 2)');
+mocha_1.describe('Parser class', () => {
+    mocha_1.it('Should parse the "Done" example', () => {
+        const parser = new parser_1.Parser('(+ 2 2)');
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 1);
         const plus = {
@@ -88,10 +90,10 @@ describe('Parser class', () => {
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 0);
         parser.advance();
-        assert.strictEqual(parser.status, ParserStatus.Done);
+        assert.strictEqual(parser.status, parser_1.ParserStatus.Done);
     });
-    it('Should parse the "Done" example with tricky strings', () => {
-        const parser = new Parser('(string-append "hi\\"" "" (substring "bye\\\\" 2 2))');
+    mocha_1.it('Should parse the "Done" example with tricky strings', () => {
+        const parser = new parser_1.Parser('(string-append "hi\\"" "" (substring "bye\\\\" 2 2))');
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 1);
         const stringAppend = {
@@ -139,10 +141,10 @@ describe('Parser class', () => {
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 0);
         parser.advance();
-        assert.strictEqual(parser.status, ParserStatus.Done);
+        assert.strictEqual(parser.status, parser_1.ParserStatus.Done);
     });
-    it('Should parse the "FoundUnclosed" example', () => {
-        const parser = new Parser('(cond [true empty]');
+    mocha_1.it('Should parse the "FoundUnclosed" example', () => {
+        const parser = new parser_1.Parser('(cond [true empty]');
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 1);
         const cond = {
@@ -168,7 +170,7 @@ describe('Parser class', () => {
         parser.advance();
         assert.strictEqual(parser.contextStack.length, 1);
         parser.advance();
-        assert.strictEqual(parser.status, ParserStatus.FoundUnclosed);
+        assert.strictEqual(parser.status, parser_1.ParserStatus.FoundUnclosed);
     });
 });
 //# sourceMappingURL=parser.spec.js.map
